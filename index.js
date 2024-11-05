@@ -9,9 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const TEMPO = 2; // Tempo para executar em segundos
-const QUANTIDADE_PRODUTOS = 100;
-const PASTA_IMAGENS = "imagens";
-const NOME_ARQUIVO_PRODUTOS_NAO_ENCONTRADOS = "produtos_nao_encontrados.csv";
+const QUANTIDADE_PRODUTOS = 100; // Quantidade de linhas no arquivo TXT
+const PASTA_IMAGENS = "imagens"; // Nome da pasta que será salva as imagens
+const NOME_ARQUIVO_PRODUTOS_NAO_ENCONTRADOS = "produtos_nao_encontrados.csv"; // Nome do arquivo CSV para produtos não encontrados
 
 lerProdutosTxt();
 
