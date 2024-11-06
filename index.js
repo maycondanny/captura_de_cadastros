@@ -44,6 +44,7 @@ function lerProdutosTxt() {
       if (produto) {
         produtosNaoEncontrados.push(produto);
       }
+      registrarLog(ean);
       await delay(process.env.DELAY * 1000);
     }
 
@@ -93,7 +94,7 @@ async function baixarImagem(ean) {
       fs.mkdirSync(process.env.NOME_PASTA_IMAGENS);
     }
 
-    const imagePath = path.join(process.env.NOME_PASTA_IMAGENS, `${ean}.jpg`);
+    const imagePath = path.join(process.env.NOME_PASTA_IMAGENS, `${ean}.${process.env.EXTENSAO_IMAGEM}`);
     fs.writeFileSync(imagePath, imageBuffer);
   } catch (error) {
     console.error(`Erro ao baixar a imagem para o EAN ${ean}:`, error);
@@ -101,6 +102,26 @@ async function baixarImagem(ean) {
   } finally {
     await browser.close();
   }
+}
+
+function registrarLog(ean) {
+  const filePath = path.join(__dirname, process.env.NOME_ARQUIVO_TXT_LOG);
+  const fileStream = fs.createWriteStream(filePath, { flags: 'a', encoding: 'utf8' });
+  const logMessage = `[${formatDate()}] ${ean}\n`;
+  fileStream.write(logMessage);
+  fileStream.end();
+}
+
+function formatDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
 function salvarProdutoNaoEncontrado(produtos) {
