@@ -4,19 +4,16 @@ import { fileURLToPath } from "url";
 import path, { dirname } from "path";
 import puppeteer from "puppeteer";
 import fs from "fs";
+import dotenv from "dotenv"
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const TEMPO = 2; // Tempo para executar em segundos
-const QUANTIDADE_PRODUTOS = 100; // Quantidade de linhas no arquivo TXT
-const PASTA_IMAGENS = "imagens"; // Nome da pasta que será salva as imagens
-const NOME_ARQUIVO_PRODUTOS_NAO_ENCONTRADOS = "produtos_nao_encontrados.csv"; // Nome do arquivo CSV para produtos não encontrados
-
 lerProdutosTxt();
 
 function lerProdutosTxt() {
-  const filePath = path.join(__dirname, "produtos.txt");
+  const filePath = path.join(__dirname, process.env.NOME_ARQUIVO_TXT_PRODUTOS);
 
   const fileStream = fs.createReadStream(filePath, { encoding: "utf8" });
 
@@ -30,7 +27,7 @@ function lerProdutosTxt() {
   let eans = [];
 
   rl.on("line", (line) => {
-    if (contador < QUANTIDADE_PRODUTOS) {
+    if (contador < process.env.QUANTIDADE_PRODUTOS_TXT) {
       eans.push(line);
       contador++;
     } else {
@@ -39,16 +36,19 @@ function lerProdutosTxt() {
   });
 
   rl.on("close", async () => {
+    console.log("Download iniciado!");
+    
     const produtosNaoEncontrados = [];
     for (const ean of eans) {
       const produto = await baixarImagem(ean);
       if (produto) {
         produtosNaoEncontrados.push(produto);
       }
-      await delay(TEMPO * 1000);
+      await delay(process.env.DELAY * 1000);
     }
 
     if (produtosNaoEncontrados.length > 0) {
+      console.log("Salvando produtos não encontrados!");
       salvarProdutoNaoEncontrado(produtosNaoEncontrados);
     }
   });
@@ -59,7 +59,7 @@ function delay(ms) {
 }
 
 async function baixarImagem(ean) {
-  const url = "https://cdn-cosmos.bluesoft.com.br/products/" + ean;
+  const url = process.env.URL_COSMOS + ean;
   const browser = await puppeteer.launch({ headless: true });
 
   const page = await browser.newPage();
@@ -89,11 +89,11 @@ async function baixarImagem(ean) {
     const viewSource = await page.goto(imageSrc);
     const imageBuffer = await viewSource.buffer();
 
-    if (!fs.existsSync(PASTA_IMAGENS)) {
-      fs.mkdirSync(PASTA_IMAGENS);
+    if (!fs.existsSync(process.env.NOME_PASTA_IMAGENS)) {
+      fs.mkdirSync(process.env.NOME_PASTA_IMAGENS);
     }
 
-    const imagePath = path.join(PASTA_IMAGENS, `${ean}.jpg`);
+    const imagePath = path.join(process.env.NOME_PASTA_IMAGENS, `${ean}.jpg`);
     fs.writeFileSync(imagePath, imageBuffer);
   } catch (error) {
     console.error(`Erro ao baixar a imagem para o EAN ${ean}:`, error);
@@ -110,5 +110,6 @@ function salvarProdutoNaoEncontrado(produtos) {
 
   const csv = xlsx.utils.sheet_to_csv(ws);
 
-  fs.writeFileSync(NOME_ARQUIVO_PRODUTOS_NAO_ENCONTRADOS, csv);
+  fs.writeFileSync(process.env.NOME_CSV_PRODUTOS_NAO_ENCONTRADOS, csv);
+  console.log("Finalizado!");
 }
